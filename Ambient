@@ -1,45 +1,51 @@
-   local Lighting = game:GetService("Lighting")
+local Lighting = game:GetService("Lighting")
 
-    local DesiredColor = Color3.fromRGB(255, 255, 255)
-    local ambientenabled = true
-    local color = ambientenabled and DesiredColor or Lighting.Ambient 
+local DesiredColor = Color3.fromRGB(255, 255, 255)  -- Set the color to white
+local ambientenabled = true  -- Set to true to enable immediately
+local color = ambientenabled and DesiredColor or Lighting.Ambient
 
+if ambientenabled then
+    color = DesiredColor
+end
 
-    if ambientenabled then 
-        color = DesiredColor
-    end
+local ambientFunc = {
+    TimeOfDay = Lighting.TimeOfDay,
+    Ambient = Lighting.Ambient,
+    GlobalShadows = Lighting.GlobalShadows,
+    ColorShift_Top = Lighting.ColorShift_Top,
+    ColorShift_Bottom = Lighting.ColorShift_Bottom,
+    FogEnd = Lighting.FogEnd,
+    FogStart = Lighting.FogStart,
+    FogColor = Lighting.FogColor,
+}
 
-    local ambientFunc = {
-        TimeOfDay = Lighting.TimeOfDay,
-        Ambient = Lighting.Ambient,
-        GlobalShadows = Lighting.GlobalShadows,
-        ColorShift_Top = Lighting.ColorShift_Top,
-        ColorShift_Bottom = Lighting.ColorShift_Bottom,
-        FogEnd = Lighting.FogEnd,
-        FogStart = Lighting.FogStart,
-        FogColor = Lighting.FogColor,
-    }
-
-    local SpoofedAmbient2; SpoofedAmbient2 = hookmetamethod(game, "__index", newcclosure(function(self, string)
-        if checkcaller() then 
-            return SpoofedAmbient2(self, string, value)
-        end
-        if self == Lighting and ambientFunc[string] then
-            return ambientFunc[string]
-        end
+local SpoofedAmbient2
+SpoofedAmbient2 = hookmetamethod(game, "__index", newcclosure(function(self, string)
+    if checkcaller() then
         return SpoofedAmbient2(self, string)
-    end))
+    end
+    if self == Lighting and ambientFunc[string] then
+        return ambientFunc[string]
+    end
+    return SpoofedAmbient2(self, string)
+end))
 
-    local SpoofedAmbient1; SpoofedAmbient1 = hookmetamethod(game, "__newindex", newcclosure(function(self, string, value)
-        if checkcaller() then 
-            return SpoofedAmbient1(self, string, value)
-        end
-        if self == Lighting then
-            ambientFunc[string] = value
-            if string == "Ambient" then
-                color = ambientenabled and DesiredColor or value
-                return SpoofedAmbient1(self, string, color)
-            end
-        end
+local SpoofedAmbient1
+SpoofedAmbient1 = hookmetamethod(game, "__newindex", newcclosure(function(self, string, value)
+    if checkcaller() then
         return SpoofedAmbient1(self, string, value)
-    end))
+    end
+    if self == Lighting then
+        ambientFunc[string] = value
+        if string == "Ambient" then
+            color = ambientenabled and DesiredColor or value
+            return SpoofedAmbient1(self, string, color)
+        end
+    end
+    return SpoofedAmbient1(self, string, value)
+end))
+
+-- Automatically enable ambient with white color when the script is executed
+ambientenabled = true  -- Enabled by default
+DesiredColor = Color3.fromRGB(255, 255, 255)  -- Set the color to white
+color = ambientenabled and DesiredColor or Lighting.Ambient
